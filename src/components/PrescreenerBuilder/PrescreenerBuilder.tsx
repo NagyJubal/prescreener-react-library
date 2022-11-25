@@ -42,14 +42,20 @@ const PrescreenerBuilder = (props: PrescreenerBuilderProps) => {
     type: "none",
     editing: false,
   });
+  const [editingQuestion, SetEditingQuestion] = useState<any>({});
   const [questionArray, SetQuestionArray] = useState<
     (SingleSelectInterface | InfoNodeInterface)[]
   >([
     {
       question_id: "Q0",
-      question_text: "testing purpose",
+      question_text: "testing Single Select",
       type: "single",
       rows: [{ label: "first", value: "1", terminate: true }],
+    },
+    {
+      question_id: "Q1",
+      question_text: "testing info Node",
+      type: "info",
     },
   ]);
   const addToQuestionArray = (
@@ -61,15 +67,64 @@ const PrescreenerBuilder = (props: PrescreenerBuilderProps) => {
     myTuple.push(question);
     SetQuestionArray(myTuple);
   };
-  // useEffect(() => {
-  //   addToQuestionArray({ question_text: "nagymami", question_id: "q1" });
-  // }, []);
-  useEffect(() => {
-    console.log(questionArray);
-  }, [questionArray]);
+  const changeInQuestionArray = (
+    question: InfoNodeInterface | SingleSelectInterface,
+    index: number
+  ) => {
+    const myTuple: (SingleSelectInterface | InfoNodeInterface)[] = [
+      ...questionArray,
+    ];
+    myTuple[index] = question;
+    SetQuestionArray(myTuple);
+  };
+  const removeFromQuestionArray = (index: number) => {
+    const myTuple: (SingleSelectInterface | InfoNodeInterface)[] = [
+      ...questionArray,
+    ];
+    if (index > -1) {
+      myTuple.splice(index, 1);
+      for (let i = index; i < myTuple.length; i++) {
+        myTuple[i].question_id = `Q${i}`;
+      }
+      SetQuestionArray(myTuple);
+    }
+  };
+  const swapInQuestionArray = (index: number, up: boolean) => {
+    const swapElements = (index1: number, index2: number) => {
+      const myTuple: (SingleSelectInterface | InfoNodeInterface)[] = [
+        ...questionArray,
+      ];
+      [myTuple[index1], myTuple[index2]] = [myTuple[index2], myTuple[index1]];
+      SetQuestionArray(myTuple);
+    };
+    let index1: number;
+    if (index > 0 && up) {
+      index1 = index - 1;
+      swapElements(index1, index);
+    }
+    if (index < getQuestionArrayLength() - 1 && !up) {
+      index1 = index + 1;
+      swapElements(index1, index);
+    }
+  };
+  const getQuestionArrayLength = () => {
+    return questionArray.length;
+  };
 
   return (
-    <AppContext.Provider value={{ editing, SetEditing }}>
+    <AppContext.Provider
+      value={{
+        editing,
+        SetEditing,
+        editingQuestion,
+        SetEditingQuestion,
+        getQuestionArrayLength,
+        addToQuestionArray,
+        changeInQuestionArray,
+        removeFromQuestionArray,
+        swapInQuestionArray,
+      }}
+    >
       <Grid container spacing={1}>
         {!editing.state && (
           <>
@@ -87,18 +142,8 @@ const PrescreenerBuilder = (props: PrescreenerBuilderProps) => {
             </Grid>
           </>
         )}
-        {editing.state && editing.type == "single" && (
-          <EditSingleSelect
-            addToQuestionArray={addToQuestionArray}
-            index={editing.editing ? 999 : questionArray.length}
-          />
-        )}
-        {editing.state && editing.type == "info" && (
-          <EditInfoNode
-            addToQuestionArray={addToQuestionArray}
-            index={editing.editing ? 999 : questionArray.length}
-          />
-        )}
+        {editing.state && editing.type == "single" && <EditSingleSelect />}
+        {editing.state && editing.type == "info" && <EditInfoNode />}
       </Grid>
     </AppContext.Provider>
   );
