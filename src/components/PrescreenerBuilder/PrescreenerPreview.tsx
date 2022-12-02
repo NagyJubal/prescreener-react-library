@@ -20,7 +20,7 @@ import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 const useStyles = makeStyles({
   previewCanvas: {
     width: "90%",
-    height: "70%",
+    height: "auto",
     padding: "20px",
   },
   question_container: {
@@ -49,14 +49,11 @@ export interface PrescreenerPreviewProps {
 export const PrescreenerPreview = (props: PrescreenerPreviewProps) => {
   const classes = useStyles();
   const questionArray = props.questionArray;
-  const handleSave = () => {
-    console.log(questionArray);
-  };
   return (
     <>
       <Paper elevation={3} className={classes.previewCanvas}>
         {questionArray.map((row, index) => (
-          <>
+          <div key={index}>
             {row.type == "info"
               ? PreviewInfo(row as InfoNodeInterface, index)
               : ""}
@@ -64,14 +61,9 @@ export const PrescreenerPreview = (props: PrescreenerPreviewProps) => {
               ? PreviewSingle(row as SingleSelectInterface, index)
               : ""}
             {<Divider />}
-          </>
+          </div>
         ))}
       </Paper>
-      <div style={{ textAlign: "right" }}>
-        <Button color={"primary"} onClick={handleSave} variant={"outlined"}>
-          Save
-        </Button>
-      </div>
     </>
   );
 };
@@ -81,10 +73,10 @@ const PreviewInfo = (node: InfoNodeInterface, index: number) => {
   return (
     <>
       <Grid container spacing={1} className={classes.question_container}>
-        <Grid item xs={10}>
+        <Grid item xs={11}>
           {node.question_text}
         </Grid>
-        <Grid item xs={2}>
+        <Grid item xs={1}>
           <EditOptions node={node} index={index} />
         </Grid>
       </Grid>
@@ -96,10 +88,10 @@ const PreviewSingle = (node: SingleSelectInterface, index: number) => {
   return (
     <>
       <Grid container spacing={1}>
-        <Grid item xs={10}>
+        <Grid item xs={11}>
           {node.question_text}
         </Grid>
-        <Grid item xs={2}>
+        <Grid item xs={1}>
           <EditOptions node={node} index={index} />
         </Grid>
         <Grid item xs={11}>
@@ -107,8 +99,9 @@ const PreviewSingle = (node: SingleSelectInterface, index: number) => {
             aria-labelledby="demo-radio-buttons-group-label"
             name="radio-buttons-group"
           >
-            {node?.rows?.map((row, index) => (
+            {node.rows.map((row, index) => (
               <FormControlLabel
+                key={index}
                 value={row.label}
                 control={<Radio size="small" />}
                 label={row.label}
@@ -120,19 +113,29 @@ const PreviewSingle = (node: SingleSelectInterface, index: number) => {
     </>
   );
 };
-
-const EditOptions = (node: any, index: number) => {
+interface EditOptionsPropsInterface {
+  node: SingleSelectInterface | InfoNodeInterface;
+  index: number;
+}
+const EditOptions = (props: EditOptionsPropsInterface) => {
+  const node = props.node;
+  const index = props.index;
   const classes = useStyles();
-  const { SetEditing } = useContext(AppContext);
+  const { SetEditing, SetEditingQuestion, swapInQuestionArray } =
+    useContext(AppContext);
+
   const editQuestion = () => {
-    SetEditing({ state: true, type: "info", editing: false });
+    SetEditingQuestion({ question: node, index: index });
+    node?.type == "info"
+      ? SetEditing({ state: true, type: "info", editing: true })
+      : SetEditing({ state: true, type: "single", editing: true });
   };
+
   return (
     <span className={classes.icon_container}>
       <EditIcon onClick={editQuestion} />
-      <ArrowUpwardIcon />
-      <ArrowDownwardIcon />
-      <DeleteForeverIcon />
+      <ArrowUpwardIcon onClick={() => swapInQuestionArray(index, true)} />
+      <ArrowDownwardIcon onClick={() => swapInQuestionArray(index, false)} />
     </span>
   );
 };

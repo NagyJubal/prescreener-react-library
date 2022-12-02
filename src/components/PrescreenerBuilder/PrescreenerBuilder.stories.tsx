@@ -1,18 +1,20 @@
-import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import React from "react";
+import { ComponentStory, ComponentMeta } from "@storybook/react";
 
-import PrescreenerBuilder from './PrescreenerBuilder';
+import PrescreenerBuilder from "./PrescreenerBuilder";
 
 export default {
-    title: 'PrescreenerReactLibrary/PrescreenerBuilder',
-    component: PrescreenerBuilder,  
-  } as ComponentMeta<typeof PrescreenerBuilder>;
+  title: "PrescreenerReactLibrary/PrescreenerBuilder",
+  component: PrescreenerBuilder,
+} as ComponentMeta<typeof PrescreenerBuilder>;
 
+const Template: ComponentStory<typeof PrescreenerBuilder> = (args) => (
+  <PrescreenerBuilder {...args} />
+);
 
-  const Template: ComponentStory<typeof PrescreenerBuilder> = (args) => <PrescreenerBuilder {...args} />;
+export const FirstTest = Template.bind({});
 
-  export const FirstTest = Template.bind({});
-
-  FirstTest.args = {
-    surveyId : "SID00001",
-  }
+FirstTest.args = {
+  surveyId: "SID-1032",
+  apollo_uri: "http://localhost:4000/graphql",
+};

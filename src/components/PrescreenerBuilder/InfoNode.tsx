@@ -60,19 +60,16 @@ export const InfoNode = () => {
   };
   return (
     <Item onClick={onClickAdd}>
-      <Chip label="Info Node" variant="outlined" />
-      <Fab size="small" color="secondary" aria-label="add">
-        <AddIcon />
-      </Fab>
+      <Chip
+        color="primary"
+        label="Info Node"
+        variant="outlined"
+        onDelete={() => {}}
+        deleteIcon={<AddIcon />}
+      />
     </Item>
   );
 };
-
-interface EditInfoNodeProps {
-  question_data?: JSON;
-  addToQuestionArray?: Function;
-  index?: number;
-}
 
 interface FormValues {
   type: string;
@@ -100,13 +97,29 @@ const formStatusProps: myFormStatusProps = {
   },
 };
 
-export const EditInfoNode = (props: EditInfoNodeProps) => {
-  const { SetEditing } = useContext(AppContext);
+export const EditInfoNode = () => {
+  const {
+    editing,
+    SetEditing,
+    editingQuestion,
+    SetEditingQuestion,
+    getQuestionArrayLength,
+    addToQuestionArray,
+    changeInQuestionArray,
+    removeFromQuestionArray,
+  } = useContext(AppContext);
+  const index = editing.editing
+    ? editingQuestion.index
+    : getQuestionArrayLength();
   const closeEditing = () => {
     SetEditing({ state: false, type: "none", editing: false });
+    SetEditingQuestion({});
   };
   const addToMainArray = (data: InfoNodeInterface) => {
-    if (props.addToQuestionArray) props.addToQuestionArray(data);
+    addToQuestionArray(data);
+  };
+  const changeInMainArray = (data: InfoNodeInterface, index: number) => {
+    changeInQuestionArray(data, index);
   };
   const classes = useStyles();
   const [displayFormStatus, setDisplayFormStatus] = useState(false);
@@ -118,18 +131,13 @@ export const EditInfoNode = (props: EditInfoNodeProps) => {
   const saveForm = async (data: FormValues, resetForm: Function) => {
     try {
       if (data) {
-        console.log(
-          "🚀 ~ file: InfoNode.tsx ~ line 123 ~ saveForm ~ data",
-          data
-        );
         setFormStatus(formStatusProps.success);
-        addToMainArray(data);
+        editing.editing ? changeInMainArray(data, index) : addToMainArray(data);
         closeEditing();
         //resetForm({});
       }
       //closeEditing();
     } catch (error: any) {
-      const response = error.response;
       setFormStatus(formStatusProps.error);
     } finally {
       setDisplayFormStatus(true);
@@ -140,18 +148,25 @@ export const EditInfoNode = (props: EditInfoNodeProps) => {
     closeEditing();
   };
   const handleDelete = () => {
+    if (editing.editing) {
+      removeFromQuestionArray(index);
+    }
     console.log("Delete");
     closeEditing();
   };
 
   return (
-    <div className={classes.root}>
+    <div key={index} className={classes.root}>
       <Formik
-        initialValues={{
-          type: "info",
-          question_text: "",
-          question_id: `Q${props.index}`,
-        }}
+        initialValues={
+          editing.editing
+            ? editingQuestion.question
+            : {
+                type: "info",
+                question_text: "",
+                question_id: `Q${index}`,
+              }
+        }
         onSubmit={(values: FormValues, actions) => {
           saveForm(values, actions.resetForm);
           setTimeout(() => {

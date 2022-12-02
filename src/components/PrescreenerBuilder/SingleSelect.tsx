@@ -1,6 +1,5 @@
 import React, { useState, useContext } from "react";
 import Chip from "@mui/material/Chip";
-import Fab from "@mui/material/Fab";
 import AddIcon from "@mui/icons-material/Add";
 import { Paper } from "@mui/material";
 import { makeStyles } from "@mui/styles";
@@ -74,19 +73,16 @@ export const SingleSelect = () => {
   };
   return (
     <Item onClick={onClickAdd}>
-      <Chip label="Single Select" variant="outlined" />
-      <Fab size="small" color="secondary" aria-label="add">
-        <AddIcon />
-      </Fab>
+      <Chip
+        color="primary"
+        label="Single Select"
+        variant="outlined"
+        onDelete={() => {}}
+        deleteIcon={<AddIcon />}
+      />
     </Item>
   );
 };
-
-interface EditSingleSelectProps {
-  question_data?: JSON;
-  addToQuestionArray?: Function;
-  index?: number;
-}
 
 interface FormValues {
   type: string;
@@ -94,7 +90,6 @@ interface FormValues {
   question_id: string;
   rows: {
     label: string;
-    value: string;
     terminate: boolean;
   }[];
 }
@@ -119,13 +114,29 @@ const formStatusProps: myFormStatusProps = {
   },
 };
 
-export const EditSingleSelect = (props: EditSingleSelectProps) => {
-  const { SetEditing } = useContext(AppContext);
+export const EditSingleSelect = () => {
+  const {
+    editing,
+    SetEditing,
+    editingQuestion,
+    SetEditingQuestion,
+    getQuestionArrayLength,
+    addToQuestionArray,
+    changeInQuestionArray,
+    removeFromQuestionArray,
+  } = useContext(AppContext);
+  const index = editing.editing
+    ? editingQuestion.index
+    : getQuestionArrayLength();
   const closeEditing = () => {
     SetEditing({ state: false, type: "none" });
+    SetEditingQuestion({});
   };
   const addToMainArray = (data: SingleSelectInterface) => {
-    if (props.addToQuestionArray) props.addToQuestionArray(data);
+    addToQuestionArray(data);
+  };
+  const changeInMainArray = (data: SingleSelectInterface, index: number) => {
+    changeInQuestionArray(data, index);
   };
   const classes = useStyles();
   const [displayFormStatus, setDisplayFormStatus] = useState(false);
@@ -137,12 +148,8 @@ export const EditSingleSelect = (props: EditSingleSelectProps) => {
   const saveForm = async (data: FormValues, resetForm: Function) => {
     try {
       if (data) {
-        console.log(
-          "🚀 ~ file: InfoNode.tsx ~ line 123 ~ saveForm ~ data",
-          data
-        );
         setFormStatus(formStatusProps.success);
-        addToMainArray(data);
+        editing.editing ? changeInMainArray(data, index) : addToMainArray(data);
         closeEditing();
         //resetForm({});
       }
@@ -159,25 +166,26 @@ export const EditSingleSelect = (props: EditSingleSelectProps) => {
     closeEditing();
   };
   const handleDelete = () => {
+    if (editing.editing) {
+      removeFromQuestionArray(index);
+    }
     console.log("Delete");
     closeEditing();
   };
-  const handleSwitch = () => {
-    console.log("Switch");
-  };
-  const handleAddRow = () => {
-    console.log("Add Row");
-  };
 
   return (
-    <div className={classes.root}>
+    <div key={index} className={classes.root}>
       <Formik
-        initialValues={{
-          type: "single",
-          question_text: "",
-          question_id: `Q${props.index}`,
-          rows: [{ label: "", value: "", terminate: false }],
-        }}
+        initialValues={
+          editing.editing
+            ? editingQuestion.question
+            : {
+                type: "single",
+                question_text: "",
+                question_id: `Q${index}`,
+                rows: [{ label: "", terminate: false }],
+              }
+        }
         onSubmit={(values: FormValues, actions) => {
           saveForm(values, actions.resetForm);
           setTimeout(() => {
@@ -192,7 +200,6 @@ export const EditSingleSelect = (props: EditSingleSelectProps) => {
           rows: Yup.array().of(
             Yup.object().shape({
               label: Yup.string().required("can't be empty!"),
-              value: Yup.string().required("can't be empty!"),
             })
           ),
         })}
@@ -277,7 +284,7 @@ export const EditSingleSelect = (props: EditSingleSelectProps) => {
                           <TableHead>
                             <TableRow>
                               <TableCell> Label</TableCell>
-                              <TableCell>Value</TableCell>
+
                               <TableCell>Terminate</TableCell>
                               <TableCell align="right">Remove</TableCell>
                             </TableRow>
@@ -318,31 +325,11 @@ export const EditSingleSelect = (props: EditSingleSelectProps) => {
                                         />
                                       </TableCell>
                                       <TableCell>
-                                        <TextField
-                                          name={`rows.${index}.value`}
-                                          id={`rows.${index}.value`}
-                                          label=""
-                                          type="text"
-                                          variant="outlined"
-                                          value={row.value}
-                                          onChange={handleChange}
-                                          onBlur={handleBlur}
-                                        ></TextField>
-                                        <ErrorMessage
-                                          name={`rows.${index}.label`}
-                                          render={(msg) => (
-                                            <span style={{ color: "red" }}>
-                                              {msg}
-                                            </span>
-                                          )}
-                                        />
-                                      </TableCell>
-                                      <TableCell>
                                         <Switch
                                           name={`rows.${index}.terminate`}
                                           id={`rows.${index}.terminate`}
                                           checked={row.terminate}
-                                          onChange={handleSwitch}
+                                          onChange={handleChange}
                                           inputProps={{
                                             "aria-label": "controlled",
                                           }}
